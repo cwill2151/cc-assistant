@@ -31,8 +31,7 @@
     },
     "files": [
         {"source": "initenv.lua", "destination": "initenv.lua"},
-        {"source": "common/config.lua", "destination": "common/config.lua"},
-        {"source": "config/config.json", "destination": "config/config.json"}
+        {"source": "common/config.lua", "destination": "common/config.lua"}
     ],
     "cleanup": {
         "directories": ["assistant", "storage", "common"],
