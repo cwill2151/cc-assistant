@@ -72,7 +72,7 @@ local function handleProviderCommand(message, config, comm)
         if #exactProviders == 1 then
             provider = exactProviders[1]
         elseif #exactProviders > 1 then
-            comm.sendMessage(customPrefix, "Error: Multiple providers exactly named '" .. newProvider .. "' (case-insensitive) found")
+            comm.sendMessage("Error: Multiple providers exactly named '" .. newProvider .. "' (case-insensitive) found")
             return
         else
             local partialProviders = {}
@@ -82,10 +82,10 @@ local function handleProviderCommand(message, config, comm)
                 end
             end
             if #partialProviders == 0 then
-                comm.sendMessage(customPrefix, "Error: Provider matching '" .. newProvider .. "' not found")
+                comm.sendMessage("Error: Provider matching '" .. newProvider .. "' not found")
                 return
             elseif #partialProviders > 1 then
-                comm.sendMessage(customPrefix, "Error: Multiple providers matching '" .. newProvider .. "' found")
+                comm.sendMessage("Error: Multiple providers matching '" .. newProvider .. "' found")
                 return
             end
             provider = partialProviders[1]
@@ -102,7 +102,7 @@ local function handleProviderCommand(message, config, comm)
         if #exactModels == 1 then
             model = exactModels[1]
         elseif #exactModels > 1 then
-            comm.sendMessage(customPrefix, "Error: Multiple models exactly named '" .. newModel .. "' found in provider '" .. provider.name .. "'")
+            comm.sendMessage("Error: Multiple models exactly named '" .. newModel .. "' found in provider '" .. provider.name .. "'")
             return
         else
             local partialModels = {}
@@ -112,10 +112,10 @@ local function handleProviderCommand(message, config, comm)
                 end
             end
             if #partialModels == 0 then
-                comm.sendMessage(customPrefix, "Error: Model matching '" .. newModel .. "' not found in provider '" .. provider.name .. "'")
+                comm.sendMessage("Error: Model matching '" .. newModel .. "' not found in provider '" .. provider.name .. "'")
                 return
             elseif #partialModels > 1 then
-                comm.sendMessage(customPrefix, "Error: Multiple models matching '" .. newModel .. "' found in provider '" .. provider.name .. "'")
+                comm.sendMessage("Error: Multiple models matching '" .. newModel .. "' found in provider '" .. provider.name .. "'")
                 return
             end
             model = partialModels[1]
@@ -148,16 +148,16 @@ local function handleProviderCommand(message, config, comm)
                     fileW.writeLine(line)
                 end
                 fileW.close()
-                comm.sendMessage(customPrefix, "Provider set to " .. provider.name .. " and model set to " .. model.name)
+                comm.sendMessage("Provider set to " .. provider.name .. " and model set to " .. model.name)
             else
-                comm.sendMessage(customPrefix, "Error: Could not write to config.json")
+                comm.sendMessage("Error: Could not write to config.json")
             end
         else
-            comm.sendMessage(customPrefix, "Error: Could not open config.json for reading")
+            comm.sendMessage("Error: Could not open config.json for reading")
         end
 
     else
-        comm.sendMessage(customPrefix, "Error: Invalid !provider command format. Usage: !provider <provider_name> <model_name>")
+        comm.sendMessage("Error: Invalid !provider command format. Usage: !provider <provider_name> <model_name>")
         return
     end
 end
@@ -167,10 +167,10 @@ local function listProviders(config, comm)
     for _, p in ipairs(config.providers) do
         table.insert(providerNames, p.name)
     end
-    comm.sendMessage(customPrefix, "Available providers: " .. table.concat(providerNames, ", "))
+    comm.sendMessage("Available providers: " .. table.concat(providerNames, ", "))
 end
 
-local function listModels(config, customPrefix, comm)
+local function listModels(config, comm)
     local matchingProviders = {}
     for _, p in ipairs(config.providers) do
         if string.find(p.name:lower(), providerName:lower()) then
@@ -179,10 +179,10 @@ local function listModels(config, customPrefix, comm)
     end
 
     if #matchingProviders == 0 then
-        comm.sendMessage(customPrefix, "Error: Provider matching '" .. providerName .. "' not found")
+        comm.sendMessage("Error: Provider matching '" .. providerName .. "' not found")
         return
     elseif #matchingProviders > 1 then
-        comm.sendMessage(customPrefix, "Error: Multiple providers matching '" .. providerName .. "' found")
+        comm.sendMessage("Error: Multiple providers matching '" .. providerName .. "' found")
         return
     end
 
@@ -191,7 +191,7 @@ local function listModels(config, customPrefix, comm)
     for _, m in ipairs(provider.models) do
         table.insert(modelNames, m.name)
     end
-    comm.sendMessage(customPrefix, "Models for " .. provider.name .. ": " .. table.concat(modelNames, ", "))
+    comm.sendMessage("Models for " .. provider.name .. ": " .. table.concat(modelNames, ", "))
 end
 
 return {
