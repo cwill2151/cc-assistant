@@ -12,7 +12,7 @@ local maxHistoryLength = 65536
 
 local loadedConfig = config.loadConfig()
 local provider, model, apiKey, apiUrl = config.getProvider(loadedConfig)
-providerModule = require("providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
+providerModule = require("assistant.providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
 local generationConfig = config.getModelParams(loadedConfig, model)
 print(loadedConfig.assistantName .. " has been initialized. Provider: " .. provider.name .. ", Model: " .. model.name)
 
