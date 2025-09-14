@@ -184,7 +184,7 @@ local function installSystem(systemName)
     
     if success then
         createStartupScript(systemName)
-        log(system.name .. " installation complete!", colors.lime)
+        log(system.name .. " installation aaaate!", colors.lime)
         print("")
         print("To start, run:")
         print("  " .. system.startup)
