@@ -16,7 +16,7 @@
                 {"source": "assistant/providers/provider.lua", "destination": "assistant/providers/provider.lua"},
                 {"source": "assistant/tools/meTools.lua", "destination": "assistant/tools/meTools.lua"}
             ],
-            "startup": "assistant/main.lua",
+            "startup": "assistant/main",
             "requirements": ["meBridge", "chatBox", "modem"]
         },
         "storage": {
@@ -25,7 +25,7 @@
             "files": [
                 {"source": "storage/main.lua", "destination": "storage/main.lua"}
             ],
-            "startup": "storage/main.lua",
+            "startup": "storage/main",
             "requirements": ["modem"]
         }
     },
