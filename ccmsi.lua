@@ -1,7 +1,7 @@
 ---@diagnostic disable: undefined-global, undefined-field, lowercase-global
 
 local args = {...}
-local version = "1.0.0"
+local version = "1.1.0"
 local repo = "cwill2151/cc-assistant"
 local branch = "master"
 
@@ -80,7 +80,6 @@ end
 
 local function downloadFile(path, destination)
     local url = string.format("https://raw.githubusercontent.com/%s/%s/%s", repo, branch, path)
-    log("Downloading " .. path .. "...", colors.gray)
 
     local response = http.get(url)
     if not response then
@@ -110,12 +109,93 @@ local function downloadFile(path, destination)
     return true
 end
 
+local function fetchGithubApi(path)
+    local apiUrl = string.format("https://api.github.com/repos/%s/contents/%s?ref=%s", repo, path, branch)
+
+    -- Add headers to avoid rate limiting issues
+    local headers = {
+        ["User-Agent"] = "ComputerCraft-Installer",
+        ["Accept"] = "application/vnd.github.v3+json"
+    }
+
+    local response = http.get(apiUrl, headers)
+    if not response then
+        -- Try without headers as fallback
+        response = http.get(apiUrl)
+        if not response then
+            return nil
+        end
+    end
+
+    local content = response.readAll()
+    response.close()
+
+    return textutils.unserializeJSON(content)
+end
+
+local function downloadDirectory(sourcePath, destPath, recursive)
+    -- Remove trailing slashes
+    if sourcePath:sub(-1) == "/" then
+        sourcePath = sourcePath:sub(1, -2)
+    end
+    if destPath and destPath:sub(-1) == "/" then
+        destPath = destPath:sub(1, -2)
+    end
+
+    log("Fetching directory: " .. sourcePath, colors.gray)
+
+    local listing = fetchGithubApi(sourcePath)
+
+    if not listing then
+        log("Failed to fetch directory listing for " .. sourcePath, colors.red)
+        log("This might be due to GitHub API rate limits", colors.yellow)
+        return false
+    end
+
+    -- Check if we got an API error
+    if listing.message then
+        log("GitHub API error: " .. listing.message, colors.red)
+        if listing.message:find("rate limit") then
+            log("Try again in a few minutes", colors.yellow)
+        end
+        return false
+    end
+
+    -- Create destination directory
+    if destPath and destPath ~= "" and not fs.exists(destPath) then
+        fs.makeDir(destPath)
+    end
+
+    local success = true
+    local fileCount = 0
+
+    for _, item in ipairs(listing) do
+        if item.type == "file" then
+            local fileDest = destPath and fs.combine(destPath, item.name) or item.name
+            if downloadFile(item.path, fileDest) then
+                fileCount = fileCount + 1
+            else
+                success = false
+            end
+        elseif item.type == "dir" and recursive ~= false then
+            local subDest = destPath and fs.combine(destPath, item.name) or item.name
+            if not downloadDirectory(item.path, subDest, recursive) then
+                success = false
+            end
+        end
+    end
+
+    if fileCount > 0 then
+        log("Downloaded " .. fileCount .. " files from " .. sourcePath, colors.gray)
+    end
+
+    return success
+end
+
 local function processFileEntry(file)
-    -- Check if this is a pattern entry (contains wildcards)
-    if file.pattern then
-        -- This would need to be defined in metadata with explicit file lists
-        log("Pattern-based downloads not supported - please list files explicitly", colors.yellow)
-        return true
+    -- Check if this is a directory (source ends with /)
+    if type(file.source) == "string" and file.source:sub(-1) == "/" then
+        return downloadDirectory(file.source, file.destination, file.recursive)
     end
 
     -- Single file download
@@ -181,16 +261,12 @@ local function installSystem(systemName)
     end
 
     local success = true
-    local filesDownloaded = 0
-    local filesFailed = 0
 
     -- Download common files first
     if metadata.files then
+        log("Downloading common files...", colors.cyan)
         for _, file in ipairs(metadata.files) do
-            if processFileEntry(file) then
-                filesDownloaded = filesDownloaded + 1
-            else
-                filesFailed = filesFailed + 1
+            if not processFileEntry(file) then
                 success = false
             end
         end
@@ -198,11 +274,9 @@ local function installSystem(systemName)
 
     -- Download system-specific files
     if system.files then
+        log("Downloading system files...", colors.cyan)
         for _, file in ipairs(system.files) do
-            if processFileEntry(file) then
-                filesDownloaded = filesDownloaded + 1
-            else
-                filesFailed = filesFailed + 1
+            if not processFileEntry(file) then
                 success = false
             end
         end
@@ -211,16 +285,14 @@ local function installSystem(systemName)
     if success then
         createStartupScript(systemName)
         log(system.name .. " installation complete!", colors.lime)
-        log("Downloaded " .. filesDownloaded .. " files", colors.gray)
         print("")
         print("To start, run:")
         print("  " .. system.startup)
         print("")
         print("Or reboot to auto-start")
     else
-        log("Installation incomplete", colors.red)
-        log("Downloaded: " .. filesDownloaded .. " files", colors.green)
-        log("Failed: " .. filesFailed .. " files", colors.red)
+        log("Installation had some errors", colors.red)
+        log("Some files may have been downloaded successfully", colors.yellow)
     end
 
     return success
@@ -289,30 +361,6 @@ local function cleanInstallation()
 
     local deletedCount = 0
 
-    -- Clean based on file entries
-    if metadata.files then
-        for _, file in ipairs(metadata.files) do
-            if fs.exists(file.destination) then
-                fs.delete(file.destination)
-                log("Deleted: " .. file.destination, colors.yellow)
-                deletedCount = deletedCount + 1
-            end
-        end
-    end
-
-    -- Clean system-specific files
-    for _, system in pairs(metadata.systems) do
-        if system.files then
-            for _, file in ipairs(system.files) do
-                if fs.exists(file.destination) then
-                    fs.delete(file.destination)
-                    log("Deleted: " .. file.destination, colors.yellow)
-                    deletedCount = deletedCount + 1
-                end
-            end
-        end
-    end
-
     -- Clean startup file
     if fs.exists("startup.lua") then
         fs.delete("startup.lua")
@@ -320,22 +368,40 @@ local function cleanInstallation()
         deletedCount = deletedCount + 1
     end
 
+    -- Clean based on destination paths
+    local function cleanPath(path)
+        if fs.exists(path) then
+            fs.delete(path)
+            log("Deleted: " .. path, colors.yellow)
+            return 1
+        end
+        return 0
+    end
+
+    -- Clean common files
+    if metadata.files then
+        for _, file in ipairs(metadata.files) do
+            deletedCount = deletedCount + cleanPath(file.destination)
+        end
+    end
+
+    -- Clean system files
+    for _, system in pairs(metadata.systems) do
+        if system.files then
+            for _, file in ipairs(system.files) do
+                deletedCount = deletedCount + cleanPath(file.destination)
+            end
+        end
+    end
+
     -- Additional cleanup from metadata
     if metadata.cleanup then
         for _, dir in ipairs(metadata.cleanup.directories or {}) do
-            if fs.exists(dir) and fs.isDir(dir) then
-                fs.delete(dir)
-                log("Deleted directory: " .. dir, colors.yellow)
-                deletedCount = deletedCount + 1
-            end
+            deletedCount = deletedCount + cleanPath(dir)
         end
 
         for _, file in ipairs(metadata.cleanup.files or {}) do
-            if fs.exists(file) then
-                fs.delete(file)
-                log("Deleted: " .. file, colors.yellow)
-                deletedCount = deletedCount + 1
-            end
+            deletedCount = deletedCount + cleanPath(file)
         end
     end
 
