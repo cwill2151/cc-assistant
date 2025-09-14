@@ -115,6 +115,7 @@ local function createStartupScript(systemName)
         return
     end
     
+    print(systemName .. " has a startup script: " .. system.startup)
     local content = string.format([[
 -- Auto-generated startup script for %s
 shell.execute("%s.lua")
