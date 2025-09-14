@@ -220,7 +220,7 @@ while true do
         config.handleProviderCommand(message, loadedConfig, comm)
         loadedConfig = config.loadConfig()
         provider, model, apiKey, apiUrl = config.getProvider(loadedConfig)
-        providerModule = require("providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
+        providerModule = require("assistant.providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
         generationConfig = config.getModelParams(loadedConfig, model)
     elseif string.sub(message, 1, 7) == "!models" then
         local parts = {}
