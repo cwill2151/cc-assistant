@@ -7,10 +7,14 @@
             "name": "Assistant Computer",
             "description": "A computer that runs the AI assistant.",
             "files": [
-                {
-                    "source": "assistant/",
-                    "destination": "assistant/"
-                }
+                {"source": "assistant/main.lua", "destination": "assistant/main.lua"},
+                {"source": "assistant/comm.lua", "destination": "assistant/comm.lua"},
+                {"source": "assistant/config.lua", "destination": "assistant/config.lua"},
+                {"source": "assistant/meSystem.lua", "destination": "assistant/meSystem.lua"},
+                {"source": "assistant/providers/gemini.lua", "destination": "assistant/providers/gemini.lua"},
+                {"source": "assistant/providers/openai.lua", "destination": "assistant/providers/openai.lua"},
+                {"source": "assistant/providers/provider.lua", "destination": "assistant/providers/provider.lua"},
+                {"source": "assistant/tools/meTools.lua", "destination": "assistant/tools/meTools.lua"}
             ],
             "startup": "assistant/main.lua",
             "requirements": ["meBridge", "chatBox", "modem"]
@@ -19,23 +23,15 @@
             "name": "Storage access point for the assistant",
             "description": "A simple storage system for the assistant to use.",
             "files": [
-                {
-                    "source": "storage/",
-                    "destination": "storage/"
-                }
+                {"source": "storage/main.lua", "destination": "storage/main.lua"}
             ],
+            "startup": "storage/main.lua",
             "requirements": ["modem"]
         }
     },
     "files": [
-        {
-            "source": "initenv.lua",
-            "destination": "initenv.lua"
-        },
-        {
-            "source": "common/",
-            "destination": "common/"
-        }
+        {"source": "initenv.lua", "destination": "initenv.lua"},
+        {"source": "common/config.lua", "destination": "common/config.lua"}
     ],
     "cleanup": {
         "directories": ["assistant", "storage", "common"],
