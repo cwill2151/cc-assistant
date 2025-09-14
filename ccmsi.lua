@@ -79,26 +79,29 @@ local function fetchMetadata()
 end
 
 local function fetchDirectoryListing(path)
-    local apiUrl = string.format("https://api.github.com/repos/%s/contents/%s?ref=%s", repo, path, branch)
+    -- Instead of using GitHub API, we'll use a workaround with the raw content
+    -- We need a manifest file that lists directory contents
+    local manifestUrl = string.format("https://raw.githubusercontent.com/%s/%s/%s/.manifest", repo, branch, path)
     log("Fetching directory listing for " .. path .. "...", colors.gray)
-    
-    local response = http.get(apiUrl)
+
+    local response = http.get(manifestUrl)
     if not response then
-        log("Failed to fetch directory listing for " .. path, colors.red)
+        log("Warning: No manifest found for " .. path .. ", trying alternative method", colors.yellow)
+        -- Return nil to indicate we should try a different approach
         return nil
     end
-    
+
     local content = response.readAll()
     response.close()
-    
-    local listing = textutils.unserializeJSON(content)
-    if not listing then
-        log("Failed to parse directory listing", colors.red)
-        return nil
+
+    local files = {}
+    for line in content:gmatch("[^\r\n]+") do
+        table.insert(files, line)
     end
-    
-    return listing
+
+    return files
 end
+
 
 local function downloadFile(path, destination)
     local url = string.format("https://raw.githubusercontent.com/%s/%s/%s", repo, branch, path)
@@ -138,31 +141,46 @@ local function downloadDirectory(sourcePath, destPath)
     if destPath:sub(-1) == "/" then
         destPath = destPath:sub(1, -2)
     end
-    
-    local listing = fetchDirectoryListing(sourcePath)
-    if not listing then
+
+    local manifestUrl = string.format("https://raw.githubusercontent.com/%s/%s/%s/.manifest", repo, branch, sourcePath)
+    local response = http.get(manifestUrl)
+
+    if not response then
+        log("No manifest found for " .. sourcePath, colors.yellow)
+        log("Please ensure directory has a .manifest file listing all files", colors.yellow)
         return false
     end
-    
+
+    local content = response.readAll()
+    response.close()
+
     if not fs.exists(destPath) then
         fs.makeDir(destPath)
     end
-    
+
     local success = true
-    for _, item in ipairs(listing) do
-        if item.type == "file" then
-            local fileDest = fs.combine(destPath, item.name)
-            if not downloadFile(item.path, fileDest) then
-                success = false
-            end
-        elseif item.type == "dir" then
-            local subDest = fs.combine(destPath, item.name)
-            if not downloadDirectory(item.path, subDest) then
-                success = false
+    for line in content:gmatch("[^\r\n]+") do
+        local trimmed = line:match("^%s*(.-)%s*$") -- Trim whitespace
+        if trimmed and trimmed ~= "" then
+            if trimmed:sub(-1) == "/" then
+                -- It's a subdirectory
+                local subDir = trimmed:sub(1, -2)
+                local subSourcePath = fs.combine(sourcePath, subDir)
+                local subDestPath = fs.combine(destPath, subDir)
+                if not downloadDirectory(subSourcePath, subDestPath) then
+                    success = false
+                end
+            else
+                -- It's a file
+                local sourceFile = fs.combine(sourcePath, trimmed)
+                local destFile = fs.combine(destPath, trimmed)
+                if not downloadFile(sourceFile, destFile) then
+                    success = false
+                end
             end
         end
     end
-    
+
     return success
 end
 
