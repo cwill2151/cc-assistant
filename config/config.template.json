@@ -1,0 +1,45 @@
+{
+  "assisant_name": "Assistant",
+  "selected_provider": "local-dev",
+  "selected_model": "example-model",
+  "default_params": {
+    "max_tokens": 2048,
+    "temperature": 0.8,
+    "min_p": 0.05
+  },
+  "communication": {
+    "chat_box": true,
+    "discord": false,
+    "webhook_url": "${DISCORD_WEBHOOK_URL}"
+  },
+  "providers": [
+    {
+      "name": "local-dev",
+      "base": "openai",
+      "models": [
+        { "name": "example-model", "type": "Chat", "params": "default" }
+      ]
+    },
+    {
+      "name": "custom-provider-1",
+      "base": "openai",
+      "models": [
+        { "name": "custom-small", "type": "Chat", "params": "default" },
+        { "name": "custom-medium", "type": "Chat", "params": "default" }
+      ]
+    },
+    {
+      "name": "custom-reasoning",
+      "base": "openai",
+      "models": [
+        { "name": "reasoner-alpha", "type": "Chat", "params": "default", "reasoning": true }
+      ]
+    }
+  ],
+  "local-dev_Base": "${LOCAL_DEV_BASE:https://localhost:8080/v1}",
+  "local-dev_Key": "${LOCAL_DEV_KEY}",
+  "custom-provider-1_Base": "${CUSTOM_PROVIDER_1_BASE}",
+  "custom-provider-1_Key": "${CUSTOM_PROVIDER_1_KEY}",
+  "custom-reasoning_Base": "${CUSTOM_REASONING_BASE}",
+  "custom-reasoning_Key": "${CUSTOM_REASONING_KEY}"
+}
