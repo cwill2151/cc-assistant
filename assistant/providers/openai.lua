@@ -100,7 +100,7 @@ function openai:sendRequest(requestParams)
             local think_text = string.match(response_output, "<think>(.-)</think>")
 
             if think_text then
-                local file = fs.open(config.getScriptRelative("./logs/think_output" .. os.epoch("utc") .. ".txt"), "w")
+                local file = fs.open(("/logs/think_output" .. os.epoch("utc") .. ".txt"), "w")
                 if file then
                     file.write(think_text)
                     file.close()
@@ -152,9 +152,8 @@ function openai:sendRequest(requestParams)
             local event, url, response, reason, responseCode = os.pullEvent()
             if url == requestUrl then
                 if event == "http_success" or event == "http_failure" then
-                    local logPath = config.getScriptRelative("logs")
-                    if not fs.exists(logPath) then fs.makeDir(logPath) end
-                    local file = fs.open(config.getScriptRelative("logs/tool_log" .. os.epoch("utc") .. ".lua"), "w")
+                    if not fs.exists("/logs") then fs.makeDir("/logs") end
+                    local file = fs.open(("/logs/tool_log" .. os.epoch("utc") .. ".txt"), "w")
                     file.write("Request made to " .. requestUrl .. "\n")
                     file.write("Request body: " .. jsonBody .. "\n")
                     file.close()

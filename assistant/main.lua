@@ -17,7 +17,7 @@ local generationConfig = config.getModelParams(loadedConfig, model)
 print(loadedConfig.assistant_name .. " has been initialized. Provider: " .. provider.name .. ", Model: " .. model.name)
 
 local function removeOldLogs()
-    local logPath = config.getScriptRelative("logs")
+    local logPath = "/logs"
     if not fs.exists(logPath) then
         fs.makeDir(logPath)
     end
