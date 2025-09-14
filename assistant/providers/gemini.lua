@@ -1,6 +1,7 @@
 local config = require("assistant.config")
 local me = require("assistant.meSystem")
 local baseProvider = require("assistant.providers.provider")
+local comm = require("assistant.comm")
 
 local gemini = {}
 setmetatable(gemini, { __index = baseProvider })
@@ -193,7 +194,7 @@ function gemini:sendRequest(requestParams)
         elseif type(responseOrError) == "table" and (responseOrError.reason == "Too Many Requests" or responseOrError.reason == "Service Unavailable") then
             local retryDelay = 5
             print("Model failed with '" .. responseOrError.reason .. "'. Retrying in " .. retryDelay .. " seconds...")
-            requestParams.chatBox.sendMessage("Model failed. Retrying in " .. retryDelay .. " seconds...", requestParams.customPrefix, "[" .. "]", requestParams.bracketColor)
+            comm.sendMessage("Model failed. Retrying in " .. retryDelay .. " seconds...")
             os.sleep(retryDelay)
             success, responseOrError = makeApiRequest(initialRequestBody, false)
         elseif type(responseOrError) == "string" then

@@ -184,8 +184,7 @@ while true do
             meBridge = me.bridge,
             provider = provider,
             tools = meTools,
-            handle_tool_calls = handle_tool_calls,
-            chatBox = chatBox
+            handle_tool_calls = handle_tool_calls
         }
 
         local generatedText, err = providerModule:sendRequest(requestParams)
