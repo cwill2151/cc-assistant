@@ -8,7 +8,7 @@
             "description": "A computer that runs the AI assistant.",
             "files": [
                 {
-                    "source": "assistant/",
+                    "source": "assistant",
                     "destination": "assistant/"
                 }
             ],
@@ -33,7 +33,7 @@
             "destination": "initenv.lua"
         },
         {
-            "source": "common/",
+            "source": "common",
             "destination": "common/"
         }
     ],
