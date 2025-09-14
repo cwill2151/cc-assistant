@@ -6,17 +6,15 @@ local me = require("assistant.meSystem")
 local meTools = require("assistant.tools.meTools")
 local providerModule
 
-local customPrefix = "Jarvis"
-local bracketColor = "&b"
 local systemPrompt = "You are a system administrator named Jarvis who manages a whole facility. Keep your responses filled with personality. Never use markdown and no asterisks. ONLY use ascii characters, no emojis or special characters."
 local messageHistory = {}
 local maxHistoryLength = 65536
 
-local loadedConfig = config.loadConfig(config.configPath)
+local loadedConfig = config.loadConfig()
 local provider, model, apiKey, apiUrl = config.getProvider(loadedConfig)
 providerModule = require("providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
 local generationConfig = config.getModelParams(loadedConfig, model)
-print("Jarvis has been initialized. Provider: " .. provider.name .. ", Model: " .. model.name)
+print(loadedConfig.assistantName .. " has been initialized. Provider: " .. provider.name .. ", Model: " .. model.name)
 
 local function removeOldLogs()
     local logPath = config.getScriptRelative("logs")
@@ -52,7 +50,7 @@ local function constructSystemPrompt()
 
     local systemInstructions = string.format([[
 You are Jarvis, a helpful AI assistant managing a facility's ME (Matter Energy) system.
-Keep responses short, concise, and filled with personality. Use ONLY ASCII characters.
+Keep responses short, concise, and filled with personality. Use ONLY ASCII characters, NEVER use unicode emojis or special characters.
 
 CURRENT SYSTEM STATUS:
 Items: %s
@@ -187,18 +185,16 @@ while true do
             provider = provider,
             tools = meTools,
             handle_tool_calls = handle_tool_calls,
-            chatBox = chatBox,
-            customPrefix = customPrefix,
-            bracketColor = bracketColor
+            chatBox = chatBox
         }
 
         local generatedText, err = providerModule:sendRequest(requestParams)
 
         if err then
-            comm.sendMessage(customPrefix, "Error: " .. err)
+            comm.sendMessage("Error: " .. err)
         else
             print("Generated text: " .. generatedText)
-            comm.sendMessage(customPrefix, generatedText)
+            comm.sendMessage(generatedText)
             table.insert(messageHistory, { role = "assistant", content = generatedText })
         end
     elseif string.sub(message, 1, 8) == "!history" then
@@ -214,16 +210,16 @@ while true do
                 history = history .. "Tool: " .. msg.content .. "\n"
             end
         end
-        comm.sendMessage(customPrefix, "Message History:\n" .. history)
+        comm.sendMessage("Message History:\n" .. history)
     elseif string.sub(message, 1, 6) == "!clear" then
         print("Received command from " .. username .. ": " .. message)
         messageHistory = {}
-        comm.sendMessage(customPrefix, "Message history cleared.")
+        comm.sendMessage("Message history cleared.")
     elseif string.sub(message, 1, 10) == "!providers" then
-        config.listProviders(loadedConfig, bracketColor, customPrefix, comm)
+        config.listProviders(loadedConfig, comm)
     elseif string.sub(message, 1, 9) == "!provider" then
-        config.handleProviderCommand(message, loadedConfig, config.configPath, bracketColor, customPrefix, comm)
-        loadedConfig = config.loadConfig(config.configPath)
+        config.handleProviderCommand(message, loadedConfig, comm)
+        loadedConfig = config.loadConfig()
         provider, model, apiKey, apiUrl = config.getProvider(loadedConfig)
         providerModule = require("providers." .. provider.base).new(loadedConfig, model, apiKey, apiUrl)
         generationConfig = config.getModelParams(loadedConfig, model)
@@ -234,11 +230,11 @@ while true do
         end
         if #parts >= 2 then
             local providerName = table.concat(parts, " ", 2)
-            config.listModels(loadedConfig, providerName, bracketColor, customPrefix, comm)
+            config.listModels(loadedConfig, providerName, comm)
         else
-            config.listModels(loadedConfig, provider.name, bracketColor, customPrefix, comm)
+            config.listModels(loadedConfig, provider.name, comm)
         end
     elseif string.sub(message, 1, 7) == "!config" then
-        comm.sendMessage(customPrefix, "Current provider: " .. provider.name .. ", Current model: " .. model.name)
+        comm.sendMessage("Current provider: " .. provider.name .. ", Current model: " .. model.name)
     end
 end

@@ -1,5 +1,6 @@
 local configModule = require("assistant.config")
-local config = configModule.loadConfig(configModule.configPath)
+local config = configModule.loadConfig()
+local assistantName = config.assistant_name
 local chatBoxEnabled = config.communication.chat_box
 local discordEnabled = config.communication.discord
 local webhookURL = config.communication.webhook_url
@@ -17,7 +18,7 @@ local function sendToDiscord(message)
     
     local payload = {
         content = message,
-        username = "Jarvis",
+        username = assistantName,
         avatar_url = nil
     }
     
@@ -25,7 +26,7 @@ local function sendToDiscord(message)
     
     local headers = {
         ["Content-Type"] = "application/json",
-        ["User-Agent"] = "ComputerCraft/Nexus"
+        ["User-Agent"] = "ComputerCraft/Assistant"
     }
     
     local response, err = http.post({
@@ -57,11 +58,10 @@ local function stripUnicode(s)
     return (tostring(s):gsub("[\128-\255]", ""))
 end
 
-local function sendMessage(username, message)
-    username = stripUnicode(username)
+local function sendMessage(message)
     message = stripUnicode(message)
     if chatBoxEnabled then
-        chatBox.sendMessage(message, username, "[]", "&b")
+        chatBox.sendMessage(message, assistantName, "[]", "&b")
     end
     if discordEnabled then
         sendToDiscord(message)

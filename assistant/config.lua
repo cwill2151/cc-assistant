@@ -3,7 +3,6 @@ local commonConfig = require("common.config")
 local loadConfig = commonConfig.loadConfig
 local saveConfig = commonConfig.saveConfig
 local trim = commonConfig.trim
-local getScriptRelative = commonConfig.getScriptRelative
 
 local function findModelByName(provider, modelNamePartial)
     local modelNamePartialLower = modelNamePartial:lower()
@@ -52,7 +51,7 @@ local function getModelParams(config, model)
     end
 end
 
-local function handleProviderCommand(message, config, config_file, bracketColor, customPrefix, comm)
+local function handleProviderCommand(message, config, comm)
     local parts = {}
     for part in string.gmatch(message, "[^%s]+") do
         table.insert(parts, part)
@@ -122,7 +121,7 @@ local function handleProviderCommand(message, config, config_file, bracketColor,
             model = partialModels[1]
         end
 
-        local configFile = config_file
+        local configFile = commonConfig.getConfigPath()
         local file = fs.open(configFile, "r")
         if file then
             local lines = {}
@@ -163,7 +162,7 @@ local function handleProviderCommand(message, config, config_file, bracketColor,
     end
 end
 
-local function listProviders(config, bracketColor, customPrefix, comm)
+local function listProviders(config, comm)
     local providerNames = {}
     for _, p in ipairs(config.providers) do
         table.insert(providerNames, p.name)
@@ -171,7 +170,7 @@ local function listProviders(config, bracketColor, customPrefix, comm)
     comm.sendMessage(customPrefix, "Available providers: " .. table.concat(providerNames, ", "))
 end
 
-local function listModels(config, providerName, bracketColor, customPrefix, comm)
+local function listModels(config, customPrefix, comm)
     local matchingProviders = {}
     for _, p in ipairs(config.providers) do
         if string.find(p.name:lower(), providerName:lower()) then
@@ -198,13 +197,10 @@ end
 return {
     loadConfig = loadConfig,
     saveConfig = saveConfig,
-    getScriptRelative = getScriptRelative,
     
     getProvider = getProvider,
     getModelParams = getModelParams,
     handleProviderCommand = handleProviderCommand,
     listProviders = listProviders,
-    listModels = listModels,
-    
-    configPath = getScriptRelative("../../config/config.json")
+    listModels = listModels
 }
